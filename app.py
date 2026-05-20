@@ -1,14 +1,19 @@
 import subprocess
 import sys
 
-# Force-install plotly (bypasses Cloud build issues)
-subprocess.check_call([sys.executable, "-m", "pip", "install", "plotly>=5.24.0"])
+# Force install plotly (this often works when requirements.txt fails on Cloud)
+subprocess.check_call([
+    sys.executable, 
+    "-m", "pip", "install", "plotly>=5.24.0"
+])
 
 import plotly.graph_objects as go
+import plotly.express as px   # if you're using this too
 
+# Now your normal imports
 import streamlit as st
 import pandas as pd
-import plotly.graph_objects as go
+# ... rest of your imports
 import plotly.express as px
 from carbon import calculate_carbon, calculate_fuel_cost, calculate_carbon_saved, get_carbon_score
 from routes import get_route_legs, get_distance
