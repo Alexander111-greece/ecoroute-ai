@@ -1,3 +1,11 @@
+import subprocess
+import sys
+
+# Force-install plotly (bypasses Cloud build issues)
+subprocess.check_call([sys.executable, "-m", "pip", "install", "plotly>=5.24.0"])
+
+import plotly.graph_objects as go
+
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
