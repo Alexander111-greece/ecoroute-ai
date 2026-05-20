@@ -1,9 +1,3 @@
-import subprocess
-import sys
-
-# Force install plotly on Streamlit Cloud (temporary fix)
-subprocess.check_call([sys.executable, "-m", "pip", "install", "plotly>=5.24.0"])
-
 import plotly.graph_objects as go
 import plotly.express as px
 
@@ -13,6 +7,8 @@ import pandas as pd
 # Your other imports
 from carbon import calculate_carbon, calculate_fuel_cost, calculate_carbon_saved, get_carbon_score
 from routes import get_route_legs, get_distance
+
+# Rest of your code...
 
 # Rest of your code starts here...
 
