@@ -1,22 +1,20 @@
 import subprocess
 import sys
 
-# Force install plotly (this often works when requirements.txt fails on Cloud)
-subprocess.check_call([
-    sys.executable, 
-    "-m", "pip", "install", "plotly>=5.24.0"
-])
+# Force install plotly on Streamlit Cloud (temporary fix)
+subprocess.check_call([sys.executable, "-m", "pip", "install", "plotly>=5.24.0"])
 
 import plotly.graph_objects as go
-import plotly.express as px   # if you're using this too
+import plotly.express as px
 
-# Now your normal imports
 import streamlit as st
 import pandas as pd
-# ... rest of your imports
-import plotly.express as px
+
+# Your other imports
 from carbon import calculate_carbon, calculate_fuel_cost, calculate_carbon_saved, get_carbon_score
 from routes import get_route_legs, get_distance
+
+# Rest of your code starts here...
 
 st.set_page_config(page_title="EcoRoute AI", page_icon="🌱", layout="wide")
 
@@ -163,8 +161,8 @@ with tab1:
             yaxis=dict(showgrid=True, gridcolor="#2d3348", title="CO₂ Emitted (kg)"),
             margin=dict(t=20, b=20), height=380, showlegend=False,
         )
-        st.plotly_chart(fig, use_container_width=True)
-
+        st.plotly_chart(fig, width="stretch")
+        st.plotly_chart(fig, width="stretch")
         # AI Recommendation
         st.markdown('<div class="section-header">🤖 AI Recommendation</div>', unsafe_allow_html=True)
         rec_col1, rec_col2 = st.columns(2)
