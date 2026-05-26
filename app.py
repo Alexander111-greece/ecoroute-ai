@@ -5,7 +5,8 @@ import streamlit as st
 import pandas as pd
 
 # Your other imports
-from carbon import calculate_carbonimport plotly.graph_objects as go
+from carbon import calculate_carbon
+import plotly.graph_objects as go
 import plotly.express as px
 
 import streamlit as st
