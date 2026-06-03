@@ -95,7 +95,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # TABS
-tab1, tab2, tab3 = st.tabs(["🚚  Single Route Analyzer", "📦  Multi-Stop SCM Route", "📊  Vehicle Comparison"])
+tab1, tab2, tab3, tab4 = st.tabs(["🚚  Single Route Analyzer", "📦  Multi-Stop SCM Route", "📊  Vehicle Comparison", "📈  Impact Over Time"])
 
 # ── TAB 1 ──────────────────────────────────────────────────────
 with tab1:
@@ -355,3 +355,118 @@ with tab3:
         "Carbon Score": ["⭐" * get_carbon_score(c, comp_distance) for c in co2_vals]
     })
     st.dataframe(comp_df, use_container_width=True, hide_index=True)
+    # ── TAB 4 ──────────────────────────────────────────────────────
+with tab4:
+    st.markdown('<div class="section-header">📈 CO₂ Savings Impact Over Time</div>', unsafe_allow_html=True)
+    st.caption("See how your carbon savings grow when EcoRoute AI is used consistently across your fleet")
+
+    st.markdown("")
+
+    # Inputs
+    t1, t2, t3 = st.columns(3)
+    with t1:
+        fleet_size = st.slider("🚛 Fleet Size (trucks)", 1, 100, 10, key="impact_fleet")
+    with t2:
+        avg_distance = st.slider("📏 Avg Daily Route (km)", 50, 500, 200, key="impact_dist")
+    with t3:
+        impact_vehicle = st.selectbox("🚗 Vehicle Type", [
+            "Diesel Truck (Heavy)", "Diesel Truck (Light)", "CNG Truck", "Electric Vehicle"
+        ], key="impact_vehicle")
+
+    trips_per_day = 1
+    working_days = 26  # per month
+
+    # Monthly calculations
+    months = list(range(1, 13))
+    month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+    monthly_co2_saved = []
+    cumulative_co2 = []
+    cumulative_trees = []
+    cumulative_credits = []
+    running_total = 0
+
+    for m in months:
+        monthly_distance = avg_distance * working_days * fleet_size
+        monthly_saved = calculate_carbon_saved(monthly_distance, impact_vehicle, 10)
+        running_total += monthly_saved
+        monthly_co2_saved.append(round(monthly_saved, 1))
+        cumulative_co2.append(round(running_total, 1))
+        cumulative_trees.append(round(running_total / 21, 1))
+        cumulative_credits.append(round((running_total / 1000) * 1500, 2))
+
+    # Chart 1 — Monthly CO2 saved
+    st.markdown('<div class="section-header">Monthly CO₂ Saved (kg)</div>', unsafe_allow_html=True)
+
+    fig_monthly = go.Figure()
+    fig_monthly.add_trace(go.Bar(
+        x=month_names,
+        y=monthly_co2_saved,
+        marker_color="#1a9e5c",
+        name="CO₂ Saved",
+        text=[f"{v:,.0f} kg" for v in monthly_co2_saved],
+        textposition="outside",
+        textfont=dict(color="white", size=10),
+    ))
+    fig_monthly.update_layout(
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        font=dict(color="white", family="Inter"),
+        xaxis=dict(showgrid=False, tickfont=dict(color="white")),
+        yaxis=dict(showgrid=True, gridcolor="#2d3348", title="CO₂ Saved (kg)"),
+        margin=dict(t=20, b=20),
+        height=320,
+        showlegend=False,
+    )
+    st.plotly_chart(fig_monthly, use_container_width=True, key="chart_monthly")
+
+    # Chart 2 — Cumulative impact
+    st.markdown('<div class="section-header">Cumulative Annual Impact</div>', unsafe_allow_html=True)
+
+    fig_cum = go.Figure()
+    fig_cum.add_trace(go.Scatter(
+        x=month_names,
+        y=cumulative_co2,
+        mode="lines+markers",
+        line=dict(color="#1a9e5c", width=3),
+        marker=dict(size=8, color="#1a9e5c"),
+        fill="tozeroy",
+        fillcolor="rgba(26,158,92,0.15)",
+        name="Cumulative CO₂ Saved",
+    ))
+    fig_cum.update_layout(
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        font=dict(color="white", family="Inter"),
+        xaxis=dict(showgrid=False, tickfont=dict(color="white")),
+        yaxis=dict(showgrid=True, gridcolor="#2d3348", title="Cumulative CO₂ Saved (kg)"),
+        margin=dict(t=20, b=20),
+        height=300,
+        showlegend=False,
+    )
+    st.plotly_chart(fig_cum, use_container_width=True, key="chart_cumulative")
+
+    # Annual summary metrics
+    st.markdown('<div class="section-header">End of Year Summary</div>', unsafe_allow_html=True)
+
+    a1, a2, a3, a4 = st.columns(4)
+    with a1:
+        st.metric("💨 Total CO₂ Saved", f"{cumulative_co2[-1]:,.0f} kg")
+    with a2:
+        st.metric("🌳 Trees Equivalent", f"{cumulative_trees[-1]:,.0f}")
+    with a3:
+        st.metric("💰 Carbon Credits", f"₹{cumulative_credits[-1]:,.0f}")
+    with a4:
+        annual_fuel_saving = round(calculate_fuel_cost(avg_distance * working_days * 12 * fleet_size, "Diesel Truck (Heavy)") -
+                                   calculate_fuel_cost(avg_distance * working_days * 12 * fleet_size, impact_vehicle), 0)
+        st.metric("⛽ Fuel Cost Saved", f"₹{annual_fuel_saving:,.0f}")
+
+    st.markdown(f"""
+    <div class="insight-box">
+        <p>📊 A <strong>{fleet_size}-truck fleet</strong> using EcoRoute AI consistently over 12 months
+        saves <strong>{cumulative_co2[-1]:,.0f} kg of CO₂</strong> — equivalent to planting
+        <strong>{cumulative_trees[-1]:,.0f} trees</strong> and earning
+        <strong>₹{cumulative_credits[-1]:,.0f}</strong> in carbon credits annually.</p>
+    </div>
+    """, unsafe_allow_html=True)
