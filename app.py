@@ -1,16 +1,10 @@
 import plotly.graph_objects as go
 import plotly.express as px
-
 import streamlit as st
 import pandas as pd
-
-# Your other imports
+import datetime
 from carbon import calculate_carbon, calculate_fuel_cost, calculate_carbon_saved, get_carbon_score
 from routes import get_route_legs, get_distance
-
-# Rest of your code...
-
-# Rest of your code starts here...
 
 st.set_page_config(page_title="EcoRoute AI", page_icon="🌱", layout="wide")
 
@@ -66,7 +60,7 @@ with st.sidebar:
     st.metric("🚛 Routes Analyzed", "1,284")
     st.metric("💨 CO₂ Saved (tons)", "48.6")
     st.metric("🌳 Trees Equivalent", "2,314")
-    st.metric("🏙️ Cities Covered", "24")
+    st.metric("🏙️ Cities Covered", "40+")
     st.markdown("---")
     st.markdown("**Supported Vehicles**")
     st.success("✅ Electric Vehicle")
@@ -95,7 +89,12 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # TABS
-tab1, tab2, tab3, tab4 = st.tabs(["🚚  Single Route Analyzer", "📦  Multi-Stop SCM Route", "📊  Vehicle Comparison", "📈  Impact Over Time"])
+tab1, tab2, tab3, tab4 = st.tabs([
+    "🚚  Single Route Analyzer",
+    "📦  Multi-Stop SCM Route",
+    "📊  Vehicle Comparison",
+    "📈  Impact Over Time"
+])
 
 # ── TAB 1 ──────────────────────────────────────────────────────
 with tab1:
@@ -158,6 +157,7 @@ with tab1:
             margin=dict(t=20, b=20), height=380, showlegend=False,
         )
         st.plotly_chart(fig, use_container_width=True, key="chart_single")
+
         # AI Recommendation
         st.markdown('<div class="section-header">🤖 AI Recommendation</div>', unsafe_allow_html=True)
         rec_col1, rec_col2 = st.columns(2)
@@ -178,6 +178,59 @@ with tab1:
             carbon_credits = round(co2_saved / 1000, 4)
             credit_value = round(carbon_credits * 1500, 2)
             st.info(f"💰 Carbon Credits Earned: **{carbon_credits} credits**\n\nEstimated Value: **₹{credit_value}**")
+
+        # Export Report
+        st.markdown('<div class="section-header">📄 Export Route Report</div>', unsafe_allow_html=True)
+
+        report_text = f"""
+=====================================
+        ECOROUTE AI — ROUTE REPORT
+=====================================
+Team SustainLogix | Parul University
+Date: {datetime.datetime.now().strftime('%d %B %Y, %I:%M %p')}
+
+ROUTE DETAILS
+─────────────────────────────────────
+Origin          : {origin}
+Stop 1          : {stop1}
+Stop 2          : {stop2 if stop2 else 'N/A'}
+Total Distance  : {total_distance} km
+Vehicle Type    : {vehicle_type}
+Load Weight     : {load_weight} tons
+Priority        : {priority}
+
+CARBON ANALYSIS
+─────────────────────────────────────
+CO2 Emitted         : {total_co2} kg
+CO2 Saved           : {co2_saved} kg (vs Heavy Diesel)
+Estimated Fuel Cost : Rs {total_cost}
+Carbon Score        : {"⭐" * score}
+
+ENVIRONMENTAL IMPACT
+─────────────────────────────────────
+Trees Equivalent    : {trees} trees planted
+Carbon Credits      : {round(co2_saved / 1000, 4)} credits
+Credit Value (INR)  : Rs {round((co2_saved / 1000) * 1500, 2)}
+
+BEST VEHICLE FOR THIS ROUTE
+─────────────────────────────────────
+Recommended         : {best_vehicle}
+CO2 if switched     : {round(best_co2, 2)} kg
+
+=====================================
+  Powered by EcoRoute AI
+  SDG 13 — Climate Action
+  github.com/Alexander111-greece/ecoroute-ai
+=====================================
+"""
+
+        st.download_button(
+            label="📥 Download Route Report (.txt)",
+            data=report_text,
+            file_name=f"EcoRoute_Report_{origin}_to_{stop1}.txt",
+            mime="text/plain",
+            use_container_width=True,
+        )
 
         st.markdown(f"""
         <div class="insight-box">
@@ -256,9 +309,8 @@ with tab2:
                 margin=dict(t=20, b=20), height=320,
                 showlegend=False, coloraxis_showscale=False
             )
-            st.plotly_chart(fig2, use_container_width=True)
+            st.plotly_chart(fig2, use_container_width=True, key="chart_scm")
 
-            # Fleet Summary
             st.markdown('<div class="section-header">Fleet Summary</div>', unsafe_allow_html=True)
             fleet_co2 = round(total_co2_scm * num_trucks, 2)
             fleet_cost = round(total_cost_scm * num_trucks, 2)
@@ -275,7 +327,6 @@ with tab2:
             with m4:
                 st.metric("🌳 Trees Equivalent", f"{trees_fleet}")
 
-            # Load Consolidation
             st.markdown('<div class="section-header">📦 Load Consolidation Suggestion</div>', unsafe_allow_html=True)
             cons_col1, cons_col2 = st.columns(2)
 
@@ -329,7 +380,7 @@ with tab3:
         yaxis=dict(showgrid=True, gridcolor="#2d3348", title="CO₂ Emitted (kg)"),
         margin=dict(t=30, b=20), height=380,
     )
-    st.plotly_chart(fig3, use_container_width=True)
+    st.plotly_chart(fig3, use_container_width=True, key="chart_comp1")
 
     st.markdown('<div class="section-header">Fuel Cost Comparison (₹)</div>', unsafe_allow_html=True)
     fig4 = go.Figure(go.Bar(
@@ -344,7 +395,7 @@ with tab3:
         yaxis=dict(showgrid=True, gridcolor="#2d3348", title="Fuel Cost (₹)"),
         margin=dict(t=30, b=20), height=380,
     )
-    st.plotly_chart(fig4, use_container_width=True)
+    st.plotly_chart(fig4, use_container_width=True, key="chart_comp2")
 
     st.markdown('<div class="section-header">Side-by-Side Summary</div>', unsafe_allow_html=True)
     comp_df = pd.DataFrame({
@@ -355,14 +406,14 @@ with tab3:
         "Carbon Score": ["⭐" * get_carbon_score(c, comp_distance) for c in co2_vals]
     })
     st.dataframe(comp_df, use_container_width=True, hide_index=True)
-    # ── TAB 4 ──────────────────────────────────────────────────────
+
+# ── TAB 4 ──────────────────────────────────────────────────────
 with tab4:
     st.markdown('<div class="section-header">📈 CO₂ Savings Impact Over Time</div>', unsafe_allow_html=True)
     st.caption("See how your carbon savings grow when EcoRoute AI is used consistently across your fleet")
 
     st.markdown("")
 
-    # Inputs
     t1, t2, t3 = st.columns(3)
     with t1:
         fleet_size = st.slider("🚛 Fleet Size (trucks)", 1, 100, 10, key="impact_fleet")
@@ -373,10 +424,7 @@ with tab4:
             "Diesel Truck (Heavy)", "Diesel Truck (Light)", "CNG Truck", "Electric Vehicle"
         ], key="impact_vehicle")
 
-    trips_per_day = 1
-    working_days = 26  # per month
-
-    # Monthly calculations
+    working_days = 26
     months = list(range(1, 13))
     month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
                    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -396,60 +444,43 @@ with tab4:
         cumulative_trees.append(round(running_total / 21, 1))
         cumulative_credits.append(round((running_total / 1000) * 1500, 2))
 
-    # Chart 1 — Monthly CO2 saved
     st.markdown('<div class="section-header">Monthly CO₂ Saved (kg)</div>', unsafe_allow_html=True)
-
     fig_monthly = go.Figure()
     fig_monthly.add_trace(go.Bar(
-        x=month_names,
-        y=monthly_co2_saved,
-        marker_color="#1a9e5c",
-        name="CO₂ Saved",
+        x=month_names, y=monthly_co2_saved,
+        marker_color="#1a9e5c", name="CO₂ Saved",
         text=[f"{v:,.0f} kg" for v in monthly_co2_saved],
-        textposition="outside",
-        textfont=dict(color="white", size=10),
+        textposition="outside", textfont=dict(color="white", size=10),
     ))
     fig_monthly.update_layout(
-        plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
         font=dict(color="white", family="Inter"),
         xaxis=dict(showgrid=False, tickfont=dict(color="white")),
         yaxis=dict(showgrid=True, gridcolor="#2d3348", title="CO₂ Saved (kg)"),
-        margin=dict(t=20, b=20),
-        height=320,
-        showlegend=False,
+        margin=dict(t=20, b=20), height=320, showlegend=False,
     )
     st.plotly_chart(fig_monthly, use_container_width=True, key="chart_monthly")
 
-    # Chart 2 — Cumulative impact
     st.markdown('<div class="section-header">Cumulative Annual Impact</div>', unsafe_allow_html=True)
-
     fig_cum = go.Figure()
     fig_cum.add_trace(go.Scatter(
-        x=month_names,
-        y=cumulative_co2,
+        x=month_names, y=cumulative_co2,
         mode="lines+markers",
         line=dict(color="#1a9e5c", width=3),
         marker=dict(size=8, color="#1a9e5c"),
-        fill="tozeroy",
-        fillcolor="rgba(26,158,92,0.15)",
+        fill="tozeroy", fillcolor="rgba(26,158,92,0.15)",
         name="Cumulative CO₂ Saved",
     ))
     fig_cum.update_layout(
-        plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
         font=dict(color="white", family="Inter"),
         xaxis=dict(showgrid=False, tickfont=dict(color="white")),
         yaxis=dict(showgrid=True, gridcolor="#2d3348", title="Cumulative CO₂ Saved (kg)"),
-        margin=dict(t=20, b=20),
-        height=300,
-        showlegend=False,
+        margin=dict(t=20, b=20), height=300, showlegend=False,
     )
     st.plotly_chart(fig_cum, use_container_width=True, key="chart_cumulative")
 
-    # Annual summary metrics
     st.markdown('<div class="section-header">End of Year Summary</div>', unsafe_allow_html=True)
-
     a1, a2, a3, a4 = st.columns(4)
     with a1:
         st.metric("💨 Total CO₂ Saved", f"{cumulative_co2[-1]:,.0f} kg")
@@ -458,8 +489,9 @@ with tab4:
     with a3:
         st.metric("💰 Carbon Credits", f"₹{cumulative_credits[-1]:,.0f}")
     with a4:
-        annual_fuel_saving = round(calculate_fuel_cost(avg_distance * working_days * 12 * fleet_size, "Diesel Truck (Heavy)") -
-                                   calculate_fuel_cost(avg_distance * working_days * 12 * fleet_size, impact_vehicle), 0)
+        annual_fuel_saving = round(
+            calculate_fuel_cost(avg_distance * working_days * 12 * fleet_size, "Diesel Truck (Heavy)") -
+            calculate_fuel_cost(avg_distance * working_days * 12 * fleet_size, impact_vehicle), 0)
         st.metric("⛽ Fuel Cost Saved", f"₹{annual_fuel_saving:,.0f}")
 
     st.markdown(f"""
